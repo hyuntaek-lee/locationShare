@@ -1,0 +1,59 @@
+create table test.PlaceInfo
+(
+    pi_index     bigint auto_increment comment '등록번호'
+        primary key,
+    pi_placeNm   varchar(50) not null comment '장소명',
+    pi_latitude  varchar(50) not null comment '위도',
+    pi_longitude varchar(50) not null comment '경도',
+    pi_description    text         not null comment '설명'
+)
+    comment '장소 정보';
+
+
+create table test.UserInfo
+(
+    ui_index    bigint auto_increment comment '회원번호'
+        primary key,
+    ui_userId   varchar(50)  not null comment '아이디',
+    ui_password varchar(100) not null comment '비밀번호',
+    ui_userNm   varchar(50)  not null comment '이름'
+)
+    comment '사용자 정보';
+
+
+create table test.Comment
+(
+    c_index    bigint auto_increment comment '등록번호'
+        primary key,
+    c_userIndex bigint not null comment '회원번호',
+    c_placeIndex bigint not null comment '장소등록번호',
+    c_comment   text  not null comment '내용',
+    c_grade smallint not null comment '점수'
+)
+    comment '댓글 정보';
+
+
+create table test.RequestPlace
+(
+    rp_index    bigint auto_increment comment '등록번호'
+        primary key,
+    rp_placeIndex bigint not null comment '장소등록번호',
+    rp_requsetUserIndex bigint not null comment '요청한 회원번호',
+    rp_reason   text  not null comment '사유',
+    rp_result varchar(1) null comment '처리 결과',
+    rp_resultReason   text  null comment '처리 결과 사유'
+)
+    comment '장소삭제요청 정보';
+
+
+create table test.RequestUser
+(
+    ru_index    bigint auto_increment comment '등록번호'
+        primary key,
+    ru_userIndex bigint not null comment '유저등록번호',
+    ru_requsetUserIndex bigint not null comment '요청한 회원번호',
+    ru_reason   text  not null comment '사유',
+    ru_result varchar(1) null comment '처리 결과',
+    ru_resultReason   text  null comment '처리 결과 사유'
+)
+    comment '유저신고 정보';
