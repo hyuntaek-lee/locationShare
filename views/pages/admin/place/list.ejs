@@ -1,0 +1,48 @@
+<div id="placeList">
+    <p>장 소 정 보</p>
+    <table>
+        <colgroup>
+            <col width="50">
+            <col width="300">
+            <col width="100">
+        </colgroup>
+        <thead>
+        <tr>
+            <th align="center">순번</th>
+            <th align="center">장소명</th>
+            <th align="center">사용유무</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(item, index) in places">
+            <td align="center">{{ item.pi_index }}</td>
+            <td align="center">
+                <a href='javascript:void(0);' v-on:click="fn_link(item.pi_index)">{{ item.pi_placeNm }}</a>
+            </td>
+            <td align="center">{{ item.pi_useYn }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    let initInfo = (function (server) {
+        return {
+            info: server.dataInfo,
+        }
+    })(window.SAILS_LOCALS);
+
+    var app = new Vue({
+        el: '#placeList',
+        data: function(){
+            return {
+                places: initInfo.info
+            }
+        },
+        methods: {
+            fn_link(val){
+                location.href = '/admin/place/' + val;
+            }
+        }
+    });
+</script>

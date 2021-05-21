@@ -1,0 +1,48 @@
+<div id="userList">
+    <p>회 원 정 보</p>
+    <table>
+        <colgroup>
+            <col width="50">
+            <col width="200">
+            <col width="300">
+        </colgroup>
+        <thead>
+        <tr>
+            <th align="center">순번</th>
+            <th align="center">아이디</th>
+            <th align="center">성명</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(item, index) in users">
+            <td align="center">{{ item.ui_index }}</td>
+            <td align="center">
+                <a href='javascript:void(0);' v-on:click="fn_link(item.ui_index)">{{ item.ui_userId }}</a>
+            </td>
+            <td align="center">{{ item.ui_userNm }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    let initInfo = (function (server) {
+        return {
+            info: server.dataInfo,
+        }
+    })(window.SAILS_LOCALS);
+
+    var app = new Vue({
+        el: '#userList',
+        data: function(){
+            return {
+                users: initInfo.info
+            }
+        },
+        methods: {
+            fn_link(val){
+                location.href = '/admin/user/' + val;
+            }
+        }
+    });
+</script>

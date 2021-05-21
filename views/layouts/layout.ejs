@@ -23,6 +23,13 @@
     <%- partial("./partials/header.ejs")%>
   </div>
 
+  <% if(sessionInfo.passport != null && sessionInfo.passport.user != null && sessionInfo.passport.user.auth === "A"){ %>
+    <div class="nav">
+      <a href="/admin/userList">유저정보</a>
+      <a href="/admin/placeList">장소정보</a>
+    </div>
+  <% } %>
+
   <div class="body">
     <%- body %>
   </div>

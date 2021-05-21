@@ -34,13 +34,29 @@ module.exports.routes = {
   'POST /addPlace': 'place/insert',
 
   /* 댓글 */
-  'GET /commentLIst': 'comment/list',
+  'GET /commentList': 'comment/list',
   'POST /addComment': 'comment/add',
   'POST /deleteComment': 'comment/delete',
 
   /* 요청 */
   'POST /requestDeletePlace': 'request/delete-place',
   'POST /reportUser': 'request/report-user',
+
+
+  /* 관리자 */
+  'GET /admin': 'admin/main',
+  'POST /admin/login': 'admin/login',
+  'GET /admin/logout' : function(req, res){
+    req.logout();
+    req.session.destroy();
+    res.redirect('/admin');
+  },
+
+  /* 관리자 회원정보 */
+  'GET /admin/userList': 'admin/user/list',
+
+  /* 관리자 장소정보 */
+  'GET /admin/placeList': 'admin/place/list',
 
   /* 404 */
   'GET /404Error': {
