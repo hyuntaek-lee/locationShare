@@ -1,0 +1,131 @@
+<div>
+    <a href="/addPlace">등록</a>
+</div>
+
+<%- partial("./place/detail.ejs")%>
+
+<div id="map" style="width:100%; height:80%;"></div>
+
+<script>
+    var app = new Vue({
+        el: '#map',
+        data () {
+            return {
+                placeList: {}
+            }
+        },
+        created() {
+            this.getPlaceList();
+        },
+        mounted() {
+            if (window.kakao && window.kakao.maps) {
+                this.initMap();
+            } else {
+                const script = document.createElement('script');
+
+                /* global kakao */
+                script.onload = () => kakao.maps.load(this.initMap);
+                script.src = 'http://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=b2561ee3ab78ac87dc6aff5ec5d316b0';
+                document.head.appendChild(script);
+            }
+        },
+        methods: {
+            initMap() {
+                let mapContainer = document.querySelector('#map'),
+                    mapOption = {
+                        center: new kakao.maps.LatLng(37.515516, 127.023160), // 지도의 중심좌표
+                        level: 2, // 지도의 확대 레벨
+                    };
+
+                let map = new kakao.maps.Map(mapContainer, mapOption);
+                map.setMapTypeId(kakao.maps.MapTypeId.NORMAL);
+
+                // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
+                var zoomControl = new kakao.maps.ZoomControl();
+                map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+                app.drawMarker(map);
+            },
+            drawMarker(map) {
+                // 마커를 표 시할 위치와 내용을 가지고 있는 객체 배열입니다
+                let positions = app.placeList.map(x => {
+                    return {
+                        pi_index: x.pi_index,
+                        content: '<div>' + x.pi_placeNm + '</div>',
+                        latlng: new kakao.maps.LatLng(x.pi_latitude, x.pi_longitude)
+                    }
+                });
+
+                for (let i = 0; i < positions.length; i ++) {
+                    // 마커를 생성합니다
+                    let marker = new kakao.maps.Marker({
+                        map: map, // 마커를 표시할 지도
+                        position: positions[i].latlng, // 마커의 위치,
+                        clickable: true // 마커를 클릭했을 때 지도의 클릭 이벤트가 발생하지 않도록 설정합니다
+                    });
+                    marker.setAltitude(positions[i].pi_index);
+
+                    // 마커에 표시할 인포윈도우를 생성합니다
+                    let infowindow = new kakao.maps.InfoWindow({
+                        content: positions[i].content // 인포윈도우에 표시할 내용
+                    });
+
+                    // 마커에 mouseover 이벤트와 mouseout 이벤트를 등록합니다
+                    kakao.maps.event.addListener(marker, 'mouseover', app.makeOverListener(map, marker, infowindow));
+                    kakao.maps.event.addListener(marker, 'mouseout', app.makeOutListener(infowindow));
+
+                    // 마커에 클릭이벤트를 등록합니다
+                    kakao.maps.event.addListener(marker, 'click', function() {
+                        placeInfo.placeData = app.placeList.find(x => x.pi_index == marker.Aa);
+
+                        axios.get('/commentList', {
+                            params: {
+                                c_placeIndex: placeInfo.placeData.pi_index
+                            }
+                        })
+                            .then(function (response) {
+                                placeInfo.commentList = response.data.dataInfo.commentList;
+                                placeInfo.avgGrade = response.data.dataInfo.avgGrade;
+
+                                if (placeInfo.avgGrade !== 0)
+                                    document.querySelector('#avgGradeDiv').style.display = "block";
+                                else
+                                    document.querySelector('#avgGradeDiv').style.display = "none";
+                            })
+
+                        document.querySelector('#placeInfo').style.display = "block";
+
+                        // 이동할 위도 경도 위치를 생성합니다
+                        var moveLatLon = new kakao.maps.LatLng(placeInfo.placeData.pi_latitude, placeInfo.placeData.pi_longitude);
+
+                        // 지도 중심을 이동 시킵니다
+                        map.panTo(moveLatLon);
+                    });
+                }
+            },
+            makeOverListener(map, marker, infowindow) {
+                // 인포윈도우를 표시하는 클로저를 만드는 함수입니다
+                return function() {
+                    infowindow.open(map, marker);
+                };
+            },
+            makeOutListener(infowindow) {
+                // 인포윈도우를 닫는 클로저를 만드는 함수입니다
+                return function() {
+                    infowindow.close();
+                };
+            },
+            getPlaceList() {
+                axios.get('/placeList', {
+                    params: {
+                        c_placeIndex: placeInfo.placeData.pi_index
+                    }
+                })
+                    .then(function (response) {
+                        app.placeList = response.data.dataInfo;
+                    })
+            }
+        }
+    });
+
+</script>

@@ -1,0 +1,36 @@
+<%- /* Expose server-rendered data as window.SAILS_LOCALS :: */ exposeLocalsToBrowser() %>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PROJECT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="robots" content="noindex">
+
+  <link rel="stylesheet" href="/styles/common.css">
+
+  <script src="/common/util.js"></script>
+
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?clientId=orK7_YeBAdN64OJ8HUVz&amp;submodules=panorama"></script>
+  <script src="/dependencies/vue.js"></script>
+</head>
+
+
+<body>
+<div>
+  <div class="header">
+    <%- partial("./partials/header.ejs")%>
+  </div>
+
+  <div class="body">
+    <%- body %>
+  </div>
+
+  <div class="footer" style="clear: both;">
+    <%- partial("./partials/footer.ejs")%>
+  </div>
+</div>
+
+</body>
+</html>

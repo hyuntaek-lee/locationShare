@@ -1,0 +1,123 @@
+<div id='register'>
+    <table>
+        <tr>
+            <th>아이디</th>
+            <td>
+                <input type='text' id='userId' name='userId' v-model='user.ui_userId'>
+            </td>
+        </tr>
+        <tr>
+            <th scope='row'>비밀번호</th>
+            <td>
+                <input type='password' id='password' name='password' v-model='user.ui_password'>
+                <div>(대소문자/숫자/특수문자 중 2가지 이상 조합, 8자~16자)</div>
+            </td>
+        </tr>
+        <tr id='passwordChkTr'>
+            <th scope='row'>비밀번호 확인</th>
+            <td>
+                <input type='password' id='passwordChk' name=''>
+            </td>
+        </tr>
+        <tr>
+            <th scope='row'>이름</th>
+            <td>
+                <input type='text' id='userNm' name='userNm' v-model='user.ui_userNm'>
+            </td>
+        </tr>
+    </table>
+    <div class='text-right'>
+        <button id='cancelButton' v-on:click="fn_cancel()">취소</button>
+        <button id='updateButton' v-on:click="fn_update()">저장</button>
+    </div>
+</div>
+<script>
+    var app = new Vue({
+        el: '#register',
+        methods: {
+            fn_cancel: function() {
+                swal({
+                    title: '',
+                    text: '취소하시겠습니까?',
+                    type: '',
+                    buttons: {
+                        cancel: {
+                            text: '아니요',
+                            value: null,
+                            visible: true,
+                            className: '',
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: '예',
+                            value: true,
+                            visible: true,
+                            className: '',
+                            closeModal: true
+                        }
+                    },
+                }).then(function (cancelConfirm) {
+                    if (cancelConfirm) {
+                        location.href = '/';
+                    }
+                });
+            },
+            fn_update: function(){
+                if (!app.user.ui_userId || app.user.ui_userId === '') {
+                    swal('', '아이디를 입력하세요.');
+                    return false;
+                }
+
+                if (!app.user.ui_userNm || app.user.ui_userNm === '') {
+                    swal('', '이름을 입력하세요.');
+                    return false;
+                }
+
+                // 비밀번호 조건 확인
+                // if (commonUtil.passwordChk(app.user.ui_password)) {
+                //     swal('', '비밀번호 조건을 다시 한번 확인해주세요.');
+                //     return false;
+                // }
+
+                // 비밀번호 재입력 확인
+                let pwChk = document.querySelector('#passwordChk').value;
+                if (app.user.ui_password !== pwChk) {
+                    swal('', '비밀번호가 일치하지 않습니다.');
+                    return false;
+                }
+
+                axios.post('/register', app.user)
+                    .then(function (response) {
+                        let data = response.data.dataInfo;
+                        if (data.result == "fail") {
+                            swal('', '가입에 실패하였습니다.');
+                        } else {
+                            swal({
+                                title: '',
+                                text: data.ui_userId + '님의 가입이 완료되었습니다.',
+                                type: '',
+                                buttons: {
+                                    confirm: {
+                                        text: '예',
+                                        value: true,
+                                        visible: true,
+                                        className: '',
+                                        closeModal: true
+                                    }
+                                },
+                            }).then(function (confirm) {
+                                if (confirm) {
+                                    location.href = '/';
+                                }
+                            });
+                        }
+                    }.bind(this));
+            }
+        },
+        data: function(){
+            return {
+                user: {}
+            }
+        }
+    });
+</script>

@@ -1,0 +1,351 @@
+<aside id="placeInfo" style="display: none;">
+    <button v-on:click="fn_close()">x</button>
+    <div>
+        <span>{{ placeData.pi_placeNm }}</span>
+        <span v-if="placeData.rp_index">
+            <span>삭제요청된 장소에요~</span>
+        </span>
+        <span v-else>
+            <button v-on:click="fn_showModal('delete')">삭제요청</button>
+        </span>
+        <modal v-if="showModal" @close="showModal = false"></modal>
+        <div id="avgGradeDiv">
+            <span style='width:18px; height: 16px; background:url("/images/star.png")no-repeat 0 -16px; display: inline-block;'></span>
+            <span>{{ avgGrade }} / 5</span>
+        </div>
+    </div>
+    <div>
+        {{ placeData.pi_description }}
+    </div>
+    <div>
+        <p>댓글</p>
+        <table class='table text-center' id='tables'>
+            <tr v-for="(item, index) in commentList">
+                <td>
+                    <span v-if="<%=sessionInfo.passport.user.ui_index%> != item.c_userIndex" v-on:click="fn_showModal('report', item.c_userIndex)" style="cursor: pointer;">{{ item.ui_userNm }}</span>
+                    <span v-else>{{ item.ui_userNm }}</span>
+                </td>
+                <td>: {{ item.c_comment }}</td>
+                <td>
+                    <div class='star-rating'>
+                        <span v-bind:style="fn_drawStar(item.c_grade)"></span>
+                    </div>
+                </td>
+                <td v-if="<%=sessionInfo.passport.user.ui_index%> == item.c_userIndex"><button v-on:click="fn_deleteComment(item.c_index)">삭제</button></td>
+            </tr>
+        </table>
+    </div>
+    <div>
+        <span><%= sessionInfo.passport.user.ui_userNm %></span>
+        <input type='text' id='comment' name='comment' v-model='comment' v-on:keyup.enter="fn_save()">
+        <div class="star-box">
+            <span class="star star_left" v-on:click="fn_grade($event)"></span>
+            <span class="star star_right" v-on:click="fn_grade($event)"></span>
+
+            <span class="star star_left" v-on:click="fn_grade($event)"></span>
+            <span class="star star_right" v-on:click="fn_grade($event)"></span>
+
+            <span class="star star_left" v-on:click="fn_grade($event)"></span>
+            <span class="star star_right" v-on:click="fn_grade($event)"></span>
+
+            <span class="star star_left" v-on:click="fn_grade($event)"></span>
+            <span class="star star_right" v-on:click="fn_grade($event)"></span>
+
+            <span class="star star_left" v-on:click="fn_grade($event)"></span>
+            <span class="star star_right" v-on:click="fn_grade($event)"></span>
+        </div>
+        <button v-on:click="fn_save()">등록</button>
+    </div>
+</aside>
+
+<!-- template for the modal component -->
+<script type="text/x-template" id="modal-template">
+    <transition name="modal">
+        <div class="modal-mask">
+            <div class="modal-wrapper">
+                <div class="modal-container-sm">
+                    <div class="modal-body">
+                        <slot name="body">
+                            <select v-model="reason">
+                                <option v-for="option in options" v-bind:value="option.value">
+                                    {{ option.text }}
+                                </option>
+                            </select>
+                            <button class="modal-default-button" @click="$emit('close')">취소</button>
+                            <button class="modal-default-button" @click="fn_confirm()">확인</button></slot>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </transition>
+</script>
+
+<script>
+    var modalTarget = "";
+    var targetUser = "";
+    var modal = Vue.component('modal', {
+        template: '#modal-template',
+        data: function(){
+            return {
+                reason: '',
+                options: []
+            }
+        },
+        mounted() {
+            if (modalTarget === "delete") {
+                this.options = [
+                    {text: "Please select one", value: ""},
+                    {text: "잘못된 정보", value: "wrongInfo"},
+                    {text: "사용거부", value: "refuseUse"},
+                    {text: "사유재산", value: "private"},
+                ];
+            }
+            else if (modalTarget === "report") {
+                this.options = [
+                    {text: "Please select one", value: ""},
+                    {text: "비속어 사용", value: "vulgarism"},
+                    {text: "거짓제보 남발", value: "lie"},
+                ];
+            }
+        },
+        methods: {
+            fn_confirm() {
+                if (this.reason === '') {
+                    swal('', '사유를 선택하세요.');
+                    return false;
+                }
+
+                if (modalTarget === "delete") {
+                    axios.post('/requestDeletePlace', {
+                        rp_placeIndex: placeInfo.placeData.pi_index,
+                        rp_requsetUserIndex: <%= sessionInfo.passport.user.ui_index %>,
+                        rp_reason: this.reason
+                    })
+                        .then(function (response) {
+                            let data = response.data.dataInfo;
+                            if (data.result == "fail") {
+                                swal('', '삭제요청에 실패하였습니다.');
+                            } else {
+                                swal({
+                                    title: '',
+                                    text: '삭제 요청하였습니다.',
+                                    type: '',
+                                    buttons: {
+                                        confirm: {
+                                            text: '예',
+                                            value: true,
+                                            visible: true,
+                                            className: '',
+                                            closeModal: true
+                                        }
+                                    },
+                                }).then(function (confirm) {
+                                    if (confirm) {
+                                        placeInfo.placeData.rp_index = data.rp_index;
+                                        this.$emit('close');
+                                    }
+                                }.bind(this));
+                            }
+                        }.bind(this));
+                }
+                else if (modalTarget === "report") {
+                    axios.post('/reportUser', {
+                        ru_userIndex: targetUser,
+                        ru_requsetUserIndex: <%= sessionInfo.passport.user.ui_index %>,
+                        ru_reason: this.reason
+                    })
+                        .then(function (response) {
+                            let data = response.data.dataInfo;
+                            if (data.result == "fail") {
+                                swal('', '신고에 실패하였습니다.');
+                            } else {
+                                swal({
+                                    title: '',
+                                    text: '신고하였습니다.',
+                                    type: '',
+                                    buttons: {
+                                        confirm: {
+                                            text: '예',
+                                            value: true,
+                                            visible: true,
+                                            className: '',
+                                            closeModal: true
+                                        }
+                                    },
+                                }).then(function (confirm) {
+                                    if (confirm) {
+                                        this.$emit('close');
+                                    }
+                                }.bind(this));
+                            }
+                        }.bind(this));
+                }
+            }
+        }
+    });
+
+    var placeInfo = new Vue({
+        el: '#placeInfo',
+        data () {
+            return {
+                showModal: false,
+                placeData: {},
+                commentList: [],
+                comment: "",
+                grade: 0,
+                avgGrade: 0
+            }
+        },
+        methods: {
+            fn_showModal: function (target, user) {
+                modalTarget = target;
+                targetUser = user;
+                this.showModal = true;
+            },
+            fn_close() {
+                document.querySelector('#placeInfo').style.display = "none";
+            },
+            fn_getComment() {
+                axios.get('/commentList', {
+                    params: {
+                        c_placeIndex: placeInfo.placeData.pi_index
+                    }
+                })
+                    .then(function (response) {
+                        placeInfo.commentList = response.data.dataInfo.commentList;
+                        placeInfo.avgGrade = response.data.dataInfo.avgGrade;
+                        placeInfo.comment = "";
+                        placeInfo.fn_initGrade();
+                    })
+            },
+            fn_save() {
+                if (placeInfo.comment === '') {
+                    swal('', '댓글을 입력하세요.');
+                    return false;
+                }
+
+                if (placeInfo.grade === 0) {
+                    swal('', '별점을 입력하세요.');
+                    return false;
+                }
+
+                let data = {
+                    c_userIndex: <%= sessionInfo.passport.user.ui_index %>,
+                    c_placeIndex: placeInfo.placeData.pi_index,
+                    c_comment: placeInfo.comment,
+                    c_grade: placeInfo.grade
+                }
+
+                axios.post('/addComment', data)
+                    .then(function (response) {
+                        let data = response.data.dataInfo;
+                        if (data.result == "fail") {
+                            swal('', '등록에 실패하였습니다.');
+                        } else {
+                            swal({
+                                title: '',
+                                text: '댓글을 등록하였습니다.',
+                                type: '',
+                                buttons: {
+                                    confirm: {
+                                        text: '예',
+                                        value: true,
+                                        visible: true,
+                                        className: '',
+                                        closeModal: true
+                                    }
+                                },
+                            }).then(function (confirm) {
+                                if (confirm) {
+                                    placeInfo.fn_getComment();
+                                }
+                            });
+                        }
+                    }.bind(this));
+            },
+            fn_deleteComment(c_index) {
+                swal({
+                    title: '',
+                    text: '댓글을 삭제하시겠습니까?',
+                    type: '',
+                    buttons: {
+                        cancel: {
+                            text: '아니요',
+                            value: null,
+                            visible: true,
+                            className: '',
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: '예',
+                            value: true,
+                            visible: true,
+                            className: '',
+                            closeModal: true
+                        }
+                    },
+                }).then(function (confirm) {
+                    if (confirm) {
+                        axios.post('/deleteComment', {
+                            c_index: c_index
+                        })
+                            .then(function (response) {
+                                let data = response.data.dataInfo;
+                                if (data.result == "fail") {
+                                    swal('', '댓글 삭제에 실패하였습니다.');
+                                } else {
+                                    swal({
+                                        title: '',
+                                        text: '댓글을 삭제하였습니다.',
+                                        type: '',
+                                        buttons: {
+                                            confirm: {
+                                                text: '예',
+                                                value: true,
+                                                visible: true,
+                                                className: '',
+                                                closeModal: true
+                                            }
+                                        },
+                                    }).then(function (confirm) {
+                                        if (confirm) {
+                                            placeInfo.fn_getComment();
+                                        }
+                                    });
+                                }
+                            })
+                    }
+                });
+            },
+            fn_initGrade() {
+                let starList = document.querySelectorAll('.star');
+                placeInfo.grade = 0;
+
+                starList.forEach(x => {
+                    x.classList.remove('on_left');
+                    x.classList.remove('on_right');
+                });
+            },
+            fn_grade(event) {
+                let starList = document.querySelectorAll('.star');
+                placeInfo.fn_initGrade();
+
+                for (let i = 0; i < starList.length; i++) {
+                    placeInfo.grade += 0.5;
+
+                    if (i % 2 === 0)
+                        starList[i].classList.add('on_left');
+                    else
+                        starList[i].classList.add('on_right');
+
+                    if (starList[i] === event.target)
+                        break;
+                }
+            },
+            fn_drawStar(rate) {
+                let grade = rate / 5 * 100;
+                return "width: " + grade + "%";
+            }
+        }
+    });
+</script>

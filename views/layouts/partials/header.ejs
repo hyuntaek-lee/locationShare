@@ -1,0 +1,10 @@
+<nav>
+    <h4>Project</h4>
+
+    <% if(sessionInfo.passport != null){ %>
+    <div>
+        <span><%= sessionInfo.passport.user.ui_userNm %></span>
+        <a href="/logout">Logout</a>
+    </div>
+    <% } %>
+</nav>

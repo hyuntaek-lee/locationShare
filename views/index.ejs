@@ -1,0 +1,72 @@
+<!-- <%- exposeLocalsToBrowser() %> -->
+<div id="loginMain">
+    <table>
+        <colgroup>
+            <col width="100">
+            <col>
+        </colgroup>
+        <tr>
+            <td colspan="2" align="center">로 그 인</td>
+        </tr>
+        <tr>
+            <td>아이디</td>
+            <td><input type="text" name="id" id="id" v-on:keyup.enter="fn_nextField()"></td>
+        </tr>
+        <tr>
+            <td>비밀번호</td>
+            <td><input type="password" name="password" id="password" v-on:keyup.enter="fn_login()"></td>
+        </tr>
+        <tr>
+            <td colspan="3" align="right">
+                <button v-on:click="fn_login()">Login</button>
+            </td>
+        </tr>
+    </table>
+    <div>
+        <button v-on:click="fn_register()">회원가입</button>
+    </div>
+</div>
+
+<script>
+    //console.log(window.SAILS_LOCALS._csrf);
+    var app = new Vue({
+        el: '#loginMain',
+        methods: {
+            fn_nextField: function () {
+                document.querySelector('#password').focus();
+            },
+            fn_login: function () {
+                if (document.querySelector('#id').value === '') {
+                    alert('아이디를 입력하세요.');
+                    return false;
+                }
+
+                if (document.querySelector('#password').value === '') {
+                    alert('비밀번호를 입력하세요.');
+                    return false;
+                }
+
+                let loginData = {
+                    id: document.querySelector('#id').value,
+                    password: document.querySelector('#password').value,
+                    // _csrf: window.SAILS_LOCALS._csrf
+                };
+
+                axios.post('/login', loginData)
+                    .then(function (response) {
+                        let data = response.data;
+                        if (data.message) {
+                            swal('', data.message);
+                        } else if (data) {
+                            location.href = data.refer || '/main';
+                        } else {
+                            location.href = '/'
+                        }
+                    }.bind(this));
+            },
+            fn_register: function () {
+                location.href = '/register'
+            },
+        }
+    });
+</script>
